@@ -1,0 +1,205 @@
+/* ==========================================================================
+   RESPONSIVE DESIGN (MEDIA QUERIES)
+   ========================================================================== */
+
+/* Extra Large Screens (Desktop) */
+@media (min-width: 1200px) {
+  .grid-charts {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Large Screens (Laptops) */
+@media (max-width: 1199px) {
+  .grid-charts {
+    grid-template-columns: 1fr;
+  }
+  
+  .player-profile-grid {
+    grid-template-columns: 280px 1fr;
+  }
+}
+
+/* Medium Screens (Tablets) */
+@media (max-width: 991px) {
+  :root {
+    --sidebar-width: 240px;
+  }
+
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.active {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: 0 20px 20px 20px;
+  }
+
+  .sticky-header {
+    margin-left: -20px;
+    margin-right: -20px;
+    width: calc(100% + 40px);
+    padding: 0 20px;
+  }
+
+  .menu-toggle {
+    display: block;
+  }
+
+  .search-wrapper {
+    width: 180px;
+  }
+
+  .player-profile-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .player-card {
+    flex-direction: row;
+    text-align: left;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .player-avatar-wrapper {
+    margin-bottom: 0;
+  }
+
+  .player-meta-info {
+    border-top: none;
+    border-left: 1px solid var(--border-color);
+    padding-top: 0;
+    padding-left: 24px;
+  }
+
+  .predict-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Small Screens (Mobile) */
+@media (max-width: 767px) {
+  .grid-kpi {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .kpi-card {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .kpi-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+
+  .kpi-value {
+    font-size: 1.15rem;
+  }
+
+  .kpi-label {
+    font-size: 0.65rem;
+  }
+
+  .search-wrapper {
+    display: none; /* Hide header search on small mobile, rely on page-specific searches */
+  }
+
+  .header-right {
+    gap: 10px;
+  }
+
+  .breadcrumb {
+    display: none; /* Hide breadcrumbs on small mobile */
+  }
+
+  .filters-bar {
+    flex-direction: column;
+    padding: 12px 14px;
+  }
+
+  .filter-group {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .player-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .player-avatar-wrapper {
+    margin-bottom: 12px;
+  }
+
+  .player-meta-info {
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+    padding-left: 0;
+    padding-top: 16px;
+  }
+  
+  .stats-flex-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Micro Screens (Very small mobiles) */
+@media (max-width: 479px) {
+  .grid-kpi {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-card {
+    padding: 16px;
+    min-height: 320px;
+  }
+
+  .chart-title {
+    font-size: 0.9rem;
+  }
+
+  .btn-primary, .btn-secondary {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+/* ==========================================================================
+   EXPORT PDF PRINT STYLES
+   ========================================================================== */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+
+  .sidebar, .sticky-header, .filters-bar, .scroll-top-btn, .btn-primary, .btn-secondary, .chart-actions {
+    display: none !important;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .view-section {
+    display: block !important;
+  }
+
+  .kpi-card, .chart-card {
+    background: white !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

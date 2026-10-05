@@ -1,0 +1,18 @@
+{
+  "name": "ipl-analysis-prediction-dashboard",
+  "version": "1.0.0",
+  "description": "Complete IPL Analysis & Prediction Dashboard utilizing HTML, CSS, and Vanilla JavaScript, parsing data with PapaParse, and plotting with Chart.js.",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx -y http-server -p 3000 -c-1"
+  },
+  "keywords": [
+    "ipl",
+    "dashboard",
+    "data-visualization",
+    "chartjs",
+    "papaparse"
+  ],
+  "author": "Antigravity",
+  "license": "MIT"
+}

@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IPL Analytics & Statistical Prediction Dashboard</title>
+  
+  <!-- CDNs for External Libraries -->
+  <!-- Chart.js for data visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- PapaParse for CSV parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <!-- Font Awesome for premium icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="dark-theme"> <!-- Defaults to premium dark mode -->
+
+  <!-- App Wrapper -->
+  <div class="app-container">
+    
+    <!-- ==========================================================================
+         SIDEBAR NAVIGATION
+         ========================================================================== -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <i class="fas fa-trophy sidebar-logo-icon"></i>
+        <h2 class="sidebar-title">IPL<span>Insight</span></h2>
+      </div>
+      
+      <ul class="sidebar-menu">
+        <li>
+          <a href="#" class="nav-link active" data-tab="dashboard">
+            <i class="fas fa-chart-line"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" data-tab="analysis">
+            <i class="fas fa-filter"></i>
+            <span>Match Analysis</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" data-tab="advanced">
+            <i class="fas fa-laptop-code"></i>
+            <span>Advanced Stats</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" data-tab="team">
+            <i class="fas fa-shield-halved"></i>
+            <span>Team Analysis</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" data-tab="player">
+            <i class="fas fa-user-ninja"></i>
+            <span>Player Profiles</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" data-tab="season">
+            <i class="fas fa-calendar-days"></i>
+            <span>Season Records</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" data-tab="prediction">
+            <i class="fas fa-wand-magic-sparkles"></i>
+            <span>Win Predictor</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" data-tab="about">
+            <i class="fas fa-circle-info"></i>
+            <span>About</span>
+          </a>
+        </li>
+      </ul>
+      
+      <div class="sidebar-footer">
+        <div class="sidebar-utils">
+          <button id="theme-toggle" class="util-btn" title="Toggle Light/Dark Mode (Alt + T)">
+            <i class="fas fa-sun"></i>
+          </button>
+          <button id="fullscreen-toggle" class="util-btn" title="Toggle Fullscreen (Alt + F)">
+            <i class="fas fa-expand"></i>
+          </button>
+          <button id="reset-filters-btn" class="util-btn" title="Reset All Filters">
+            <i class="fas fa-rotate-left"></i>
+          </button>
+        </div>
+        <div class="text-center" style="font-size: 0.65rem; color: var(--text-light); margin-top: 5px;">
+          Version 1.0.0
+        </div>
+      </div>
+    </aside>
+
+    <!-- ==========================================================================
+         MAIN CONTENT AREA
+         ========================================================================== -->
+    <main class="main-content">
+      
+      <!-- STICKY HEADER -->
+      <header class="sticky-header">
+        <div class="header-left">
+          <button id="menu-toggle" class="menu-toggle">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="breadcrumb">
+            <span class="root">IPL Analytics</span>
+            <span class="separator">/</span>
+            <span id="bc-current" class="current">Dashboard</span>
+          </div>
+        </div>
+        
+        <div class="header-right">
+          <div class="search-wrapper">
+            <i class="fas fa-search"></i>
+            <input type="text" id="global-search-input" class="search-input" placeholder="Search team, player, venue...">
+          </div>
+          <button id="export-pdf-btn" class="btn-secondary" title="Export Dashboard as PDF">
+            <i class="fas fa-file-pdf"></i>
+            <span style="font-size:0.8rem;">Export PDF</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- ==========================================================================
+           TAB VIEWS
+           ========================================================================== -->
+
+      <!-- 1. DASHBOARD VIEW -->
+      <section id="dashboard-view" class="view-section">
+        <div class="view-header">
+          <h1 class="view-title">IPL League Overview</h1>
+          <p class="view-subtitle">Aggregated historical metrics from 2008 to 2024</p>
+        </div>
+        
+        <!-- KPI Row -->
+        <div class="grid-kpi">
+          <div class="kpi-card glass-panel kpi-primary">
+            <div class="kpi-icon-wrapper"><i class="fas fa-trophy"></i></div>
+            <div class="kpi-info">
+              <div id="kpi-total-matches" class="kpi-value">---</div>
+              <div class="kpi-label">Matches Played</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-success">
+            <div class="kpi-icon-wrapper"><i class="fas fa-users-viewfinder"></i></div>
+            <div class="kpi-info">
+              <div id="kpi-total-teams" class="kpi-value">---</div>
+              <div class="kpi-label">Active Franchises</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-warning">
+            <div class="kpi-icon-wrapper"><i class="fas fa-user-group"></i></div>
+            <div class="kpi-info">
+              <div id="kpi-total-players" class="kpi-value">---</div>
+              <div class="kpi-label">Total Players</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-danger">
+            <div class="kpi-icon-wrapper"><i class="fas fa-fire"></i></div>
+            <div class="kpi-info">
+              <div id="kpi-total-runs" class="kpi-value">---</div>
+              <div class="kpi-label">Total Runs</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-kpi">
+          <div class="kpi-card glass-panel kpi-danger">
+            <div class="kpi-icon-wrapper"><i class="fas fa-skull"></i></div>
+            <div class="kpi-info">
+              <div id="kpi-total-wickets" class="kpi-value">---</div>
+              <div class="kpi-label">Wickets Taken</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-warning">
+            <div class="kpi-icon-wrapper"><i class="fas fa-dice-six"></i></div>
+            <div class="kpi-info">
+              <div id="kpi-total-sixes" class="kpi-value">---</div>
+              <div class="kpi-label">Total Sixes</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-primary">
+            <div class="kpi-icon-wrapper"><i class="fas fa-dice-four"></i></div>
+            <div class="kpi-info">
+              <div id="kpi-total-fours" class="kpi-value">---</div>
+              <div class="kpi-label">Total Fours</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-success">
+            <div class="kpi-icon-wrapper"><i class="fas fa-star"></i></div>
+            <div class="kpi-info">
+              <div id="kpi-avg-score" class="kpi-value">---</div>
+              <div class="kpi-label">Avg Runs/Match</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-kpi">
+          <div class="kpi-card glass-panel kpi-success">
+            <div class="kpi-icon-wrapper"><i class="fas fa-arrow-trend-up"></i></div>
+            <div class="kpi-info">
+              <div id="kpi-highest-score" class="kpi-value" style="font-size:0.95rem;">---</div>
+              <div class="kpi-label">Highest Team Total</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-danger">
+            <div class="kpi-icon-wrapper"><i class="fas fa-arrow-trend-down"></i></div>
+            <div class="kpi-info">
+              <div id="kpi-lowest-score" class="kpi-value" style="font-size:0.95rem;">---</div>
+              <div class="kpi-label">Lowest Team Total</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-primary">
+            <div class="kpi-icon-wrapper"><i class="fas fa-gauge"></i></div>
+            <div class="kpi-info">
+              <div id="kpi-avg-sr" class="kpi-value">---</div>
+              <div class="kpi-label">Active Strike Rate</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-warning">
+            <div class="kpi-icon-wrapper"><i class="fas fa-percent"></i></div>
+            <div class="kpi-info">
+              <div id="kpi-avg-econ" class="kpi-value">---</div>
+              <div class="kpi-label">Avg Economy Rate</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid-charts mt-20">
+          <div class="chart-card glass-panel">
+            <div class="chart-header">
+              <div class="chart-title-bar">
+                <h3 class="chart-title">Team Wins History</h3>
+                <div class="chart-actions">
+                  <button class="chart-action-btn" onclick="ChartManager.exportChartAsPNG('chart-team-wins', 'wins_by_team.png')" title="Export PNG"><i class="fas fa-download"></i></button>
+                </div>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-team-wins"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card glass-panel">
+            <div class="chart-header">
+              <div class="chart-title-bar">
+                <h3 class="chart-title">Runs Scored by Season</h3>
+                <div class="chart-actions">
+                  <button class="chart-action-btn" onclick="ChartManager.exportChartAsPNG('chart-runs-season', 'runs_by_season.png')" title="Export PNG"><i class="fas fa-download"></i></button>
+                </div>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-runs-season"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-charts">
+          <div class="chart-card glass-panel">
+            <div class="chart-header">
+              <div class="chart-title-bar">
+                <h3 class="chart-title">Matches Played by Season</h3>
+                <div class="chart-actions">
+                  <button class="chart-action-btn" onclick="ChartManager.exportChartAsPNG('chart-matches-season', 'matches_by_season.png')" title="Export PNG"><i class="fas fa-download"></i></button>
+                </div>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-matches-season"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card glass-panel">
+            <div class="chart-header">
+              <div class="chart-title-bar">
+                <h3 class="chart-title">Toss Decisions Spread</h3>
+                <div class="chart-actions">
+                  <button class="chart-action-btn" onclick="ChartManager.exportChartAsPNG('chart-toss-decision', 'toss_decision.png')" title="Export PNG"><i class="fas fa-download"></i></button>
+                </div>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-toss-decision"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-charts">
+          <div class="chart-card glass-panel">
+            <div class="chart-header">
+              <div class="chart-title-bar">
+                <h3 class="chart-title">Top 10 Most Visited Stadiums</h3>
+                <div class="chart-actions">
+                  <button class="chart-action-btn" onclick="ChartManager.exportChartAsPNG('chart-venue-analysis', 'venue_analysis.png')" title="Export PNG"><i class="fas fa-download"></i></button>
+                </div>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-venue-analysis"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card glass-panel">
+            <div class="chart-header">
+              <div class="chart-title-bar">
+                <h3 class="chart-title">Top 5 Teams by Win Rate (%)</h3>
+                <div class="chart-actions">
+                  <button class="chart-action-btn" onclick="ChartManager.exportChartAsPNG('chart-top-teams', 'top_teams.png')" title="Export PNG"><i class="fas fa-download"></i></button>
+                </div>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-top-teams"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. MATCH ANALYSIS VIEW -->
+      <section id="analysis-view" class="view-section hidden">
+        <div class="view-header">
+          <h1 class="view-title">Match Deep-Dive</h1>
+          <p class="view-subtitle">Filter matches to identify tactical trends, conditions, and margins</p>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-bar glass-panel">
+          <div class="filter-group">
+            <label for="analysis-season">Season</label>
+            <select id="analysis-season" class="filter-select">
+              <option value="all">All Seasons</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="analysis-venue">Venue</label>
+            <select id="analysis-venue" class="filter-select">
+              <option value="all">All Venues</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="analysis-team">Team Focus</label>
+            <select id="analysis-team" class="filter-select">
+              <option value="all">All Teams</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Stats Counters -->
+        <div class="grid-kpi">
+          <div class="kpi-card glass-panel kpi-primary">
+            <div class="kpi-icon-wrapper"><i class="fas fa-grip-lines"></i></div>
+            <div class="kpi-info">
+              <div id="an-total-matches" class="kpi-value">---</div>
+              <div class="kpi-label">Filtered Matches</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-success">
+            <div class="kpi-icon-wrapper"><i class="fas fa-percent"></i></div>
+            <div class="kpi-info">
+              <div id="an-win-pct" class="kpi-value">---</div>
+              <div class="kpi-label">Team Win Rate</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-warning">
+            <div class="kpi-icon-wrapper"><i class="fas fa-coins"></i></div>
+            <div class="kpi-info">
+              <div id="an-toss-match-pct" class="kpi-value">---</div>
+              <div class="kpi-label">Toss Win = Match Win %</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-kpi">
+          <div class="kpi-card glass-panel kpi-primary">
+            <div class="kpi-icon-wrapper"><i class="fas fa-shield"></i></div>
+            <div class="kpi-info">
+              <div id="an-avg-1st-inn" class="kpi-value">---</div>
+              <div class="kpi-label">Avg 1st Innings Score</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-success">
+            <div class="kpi-icon-wrapper"><i class="fas fa-running"></i></div>
+            <div class="kpi-info">
+              <div id="an-avg-2nd-inn" class="kpi-value">---</div>
+              <div class="kpi-label">Avg 2nd Innings Score</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-warning">
+            <div class="kpi-icon-wrapper"><i class="fas fa-bolt"></i></div>
+            <div class="kpi-info">
+              <div id="an-highest-chase" class="kpi-value" style="font-size:0.95rem;">---</div>
+              <div class="kpi-label">Highest Successful Chase</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-danger">
+            <div class="kpi-icon-wrapper"><i class="fas fa-circle-check"></i></div>
+            <div class="kpi-info">
+              <div id="an-lowest-defended" class="kpi-value" style="font-size:0.95rem;">---</div>
+              <div class="kpi-label">Lowest Defended Total</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Margins and Toss Charts -->
+        <div class="grid-charts mt-20">
+          <div class="chart-card glass-panel">
+            <div class="chart-header">
+              <div class="chart-title-bar">
+                <h3 class="chart-title">Match Win Method (Defending vs Chasing)</h3>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-analysis-wintype"></canvas>
+            </div>
+            <div class="flex-between mt-10" style="font-size: 0.8rem; padding: 0 10px;">
+              <span>Defended (Won by Runs): <strong id="an-win-runs">--</strong></span>
+              <span>Chased (Won by Wickets): <strong id="an-win-wickets">--</strong></span>
+            </div>
+          </div>
+
+          <div class="chart-card glass-panel">
+            <div class="chart-header">
+              <div class="chart-title-bar">
+                <h3 class="chart-title">Toss Impact Correlation</h3>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-analysis-tossimpact"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tables Row -->
+        <div class="grid-charts">
+          <!-- Venues Table -->
+          <div class="chart-card glass-panel" style="min-height:auto;">
+            <div class="chart-header">
+              <h3 class="chart-title"><i class="fas fa-map-pin"></i> Most Successful Venues</h3>
+            </div>
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Stadium</th>
+                    <th>Matches</th>
+                    <th>Win Ratio</th>
+                  </tr>
+                </thead>
+                <tbody id="an-venue-table-body">
+                  <tr><td colspan="4" class="text-center">Loading venue table...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Captains Table -->
+          <div class="chart-card glass-panel" style="min-height:auto;">
+            <div class="chart-header">
+              <h3 class="chart-title"><i class="fas fa-user-tie"></i> Top Captains (Filtered wins)</h3>
+            </div>
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Captain Name</th>
+                    <th>Team</th>
+                    <th>Wins</th>
+                  </tr>
+                </thead>
+                <tbody id="an-captain-table-body">
+                  <tr><td colspan="4" class="text-center">Loading captain table...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. ADVANCED STATS VIEW -->
+      <section id="advanced-view" class="view-section hidden">
+        <div class="view-header">
+          <h1 class="view-title">Advanced Tactical Analytics</h1>
+          <p class="view-subtitle">Evaluate game-phase dynamics, boundary frequencies, dots, and dismissals</p>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-bar glass-panel">
+          <div class="filter-group">
+            <label for="adv-season">Season</label>
+            <select id="adv-season" class="filter-select">
+              <option value="all">All Seasons</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="adv-team">Team Focus</label>
+            <select id="adv-team" class="filter-select">
+              <option value="all">All Teams</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Phase Breakdown KPIs -->
+        <div class="grid-kpi">
+          <div class="kpi-card glass-panel kpi-warning">
+            <div class="kpi-info text-center">
+              <div id="adv-pp-rr" class="kpi-value" style="font-size:2rem;">---</div>
+              <div class="kpi-label">Powerplay Run Rate</div>
+              <div style="font-size:0.75rem; color:var(--text-light); margin-top:4px;">Wickets Lost: <strong id="adv-pp-wickets">--</strong></div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-primary">
+            <div class="kpi-info text-center">
+              <div id="adv-mid-rr" class="kpi-value" style="font-size:2rem;">---</div>
+              <div class="kpi-label">Middle Overs Run Rate</div>
+              <div style="font-size:0.75rem; color:var(--text-light); margin-top:4px;">Wickets Lost: <strong id="adv-mid-wickets">--</strong></div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-danger">
+            <div class="kpi-info text-center">
+              <div id="adv-death-rr" class="kpi-value" style="font-size:2rem;">---</div>
+              <div class="kpi-label">Death Overs Run Rate</div>
+              <div style="font-size:0.75rem; color:var(--text-light); margin-top:4px;">Wickets Lost: <strong id="adv-death-wickets">--</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-kpi" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="kpi-card glass-panel kpi-success">
+            <div class="kpi-icon-wrapper"><i class="fas fa-boundary"></i><i class="fas fa-dice-six"></i></div>
+            <div class="kpi-info">
+              <div id="adv-boundary-pct" class="kpi-value">---</div>
+              <div class="kpi-label">Boundary Ball Percentage</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-muted">
+            <div class="kpi-icon-wrapper"><i class="fas fa-circle-dot"></i></div>
+            <div class="kpi-info">
+              <div id="adv-dot-pct" class="kpi-value">---</div>
+              <div class="kpi-label">Dot Ball Percentage</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-warning">
+            <div class="kpi-icon-wrapper"><i class="fas fa-plus"></i></div>
+            <div class="kpi-info">
+              <div id="adv-total-extras" class="kpi-value">---</div>
+              <div class="kpi-label">Total Extra Runs Scored</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Advanced Analytics Charts -->
+        <div class="grid-charts mt-20">
+          <div class="chart-card glass-panel">
+            <div class="chart-header">
+              <h3 class="chart-title">Scoring Speed by Match Phase</h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-adv-phases"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card glass-panel">
+            <div class="chart-header">
+              <h3 class="chart-title">Dismissal Kinds Distribution</h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-adv-dismissals"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-charts">
+          <div class="chart-card glass-panel" style="grid-column: span 2;">
+            <div class="chart-header">
+              <h3 class="chart-title">Extras Breakdown</h3>
+            </div>
+            <div class="chart-container" style="min-height: 250px;">
+              <canvas id="chart-adv-extras"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. TEAM VIEW -->
+      <section id="team-view" class="view-section hidden">
+        <div class="view-header">
+          <h1 class="view-title">Franchise Profiler</h1>
+          <p class="view-subtitle">Select any team to view historical records, rosters landmarks, and head-to-head metrics</p>
+        </div>
+
+        <div class="filters-bar glass-panel" style="justify-content: space-between; align-items: center;">
+          <div class="filter-group" style="max-width: 300px; flex: 1;">
+            <label for="team-select">Select Franchise</label>
+            <select id="team-select" class="filter-select">
+              <option value="">Loading teams...</option>
+            </select>
+          </div>
+          
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <div id="tm-logo-placeholder" class="flex-center" style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); font-weight:700; color:white; font-size: 1.15rem;">IPL</div>
+            <div style="line-height: 1.3;">
+              <h3 style="font-size: 1.1rem; font-weight: 600;">Active Roster</h3>
+              <span style="font-size: 0.75rem; color: var(--text-light);">Historical aggregates</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Team KPIs -->
+        <div class="grid-kpi">
+          <div class="kpi-card glass-panel kpi-primary">
+            <div class="kpi-info">
+              <div id="tm-played" class="kpi-value">---</div>
+              <div class="kpi-label">Matches Played</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-success">
+            <div class="kpi-info">
+              <div id="tm-wins" class="kpi-value">---</div>
+              <div class="kpi-label">Total Victories</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-danger">
+            <div class="kpi-info">
+              <div id="tm-losses" class="kpi-value">---</div>
+              <div class="kpi-label">Matches Lost</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-warning">
+            <div class="kpi-info">
+              <div id="tm-win-pct" class="kpi-value">---</div>
+              <div class="kpi-label">Win Percentage</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-kpi">
+          <div class="kpi-card glass-panel kpi-success">
+            <div class="kpi-info">
+              <div id="tm-highest" class="kpi-value">---</div>
+              <div class="kpi-label">Highest Score</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-danger">
+            <div class="kpi-info">
+              <div id="tm-lowest" class="kpi-value">---</div>
+              <div class="kpi-label">Lowest Score</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-primary">
+            <div class="kpi-info">
+              <div id="tm-average" class="kpi-value">---</div>
+              <div class="kpi-label">Avg Runs/Innings</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Best Roster Details and Partnerships -->
+        <div class="grid-charts mt-20">
+          <div class="chart-card glass-panel" style="min-height: auto;">
+            <div class="chart-header">
+              <h3 class="chart-title"><i class="fas fa-medal"></i> Franchise Leaders</h3>
+            </div>
+            
+            <div class="player-meta-info" style="gap:15px; font-size:0.9rem;">
+              <div class="player-meta-row" style="border-bottom: 1px dashed var(--border-color); padding-bottom:8px;">
+                <span class="text-muted"><i class="fas fa-bat"></i> Top Run Scorer:</span>
+                <strong id="tm-best-batsman" class="text-main">--</strong>
+              </div>
+              <div class="player-meta-row" style="border-bottom: 1px dashed var(--border-color); padding-bottom:8px;">
+                <span class="text-muted"><i class="fas fa-ball"></i> Top Wicket Taker:</span>
+                <strong id="tm-best-bowler" class="text-main">--</strong>
+              </div>
+              <div class="player-meta-row" style="border-bottom: 1px dashed var(--border-color); padding-bottom:8px;">
+                <span class="text-muted"><i class="fas fa-dice-six"></i> Most Sixes Hit:</span>
+                <strong id="tm-most-sixes" class="text-main">--</strong>
+              </div>
+              <div class="player-meta-row" style="border-bottom: 1px dashed var(--border-color); padding-bottom:8px;">
+                <span class="text-muted"><i class="fas fa-dice-four"></i> Most Fours Hit:</span>
+                <strong id="tm-most-fours" class="text-main">--</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-card glass-panel" style="min-height: auto;">
+            <div class="chart-header">
+              <h3 class="chart-title"><i class="fas fa-handshake"></i> Top Batting Partnerships</h3>
+            </div>
+            <ul id="tm-partnership-list" style="list-style:none;">
+              <li>Loading partnerships...</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- H2H Record Matrix -->
+        <div class="chart-card glass-panel mt-20" style="min-height: auto; margin-bottom: 24px;">
+          <div class="chart-header">
+            <h3 class="chart-title"><i class="fas fa-arrows-left-right"></i> Head-to-Head Record vs All Opponents</h3>
+          </div>
+          <div class="table-responsive">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Opponent</th>
+                  <th>Played</th>
+                  <th>Won</th>
+                  <th>Lost</th>
+                  <th>Win %</th>
+                </tr>
+              </thead>
+              <tbody id="tm-h2h-table-body">
+                <tr><td colspan="5" class="text-center">Select team to display H2H records...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Team specific charts -->
+        <div class="grid-charts">
+          <div class="chart-card glass-panel">
+            <div class="chart-header">
+              <h3 class="chart-title">Season Runs Output</h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-team-runs"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card glass-panel">
+            <div class="chart-header">
+              <h3 class="chart-title">Wins by Season</h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-team-wins-season"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-charts">
+          <div class="chart-card glass-panel" style="grid-column: span 2;">
+            <div class="chart-header">
+              <h3 class="chart-title">Top Venues by Win Record</h3>
+            </div>
+            <div class="chart-container" style="min-height: 250px;">
+              <canvas id="chart-team-venues"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. PLAYER VIEW -->
+      <section id="player-view" class="view-section hidden">
+        <div class="view-header">
+          <h1 class="view-title">Player Career Cards</h1>
+          <p class="view-subtitle">Search any batsman or bowler to view comprehensive career figures and yearly charts</p>
+        </div>
+
+        <!-- Player Search and Autocomplete Input -->
+        <div class="filters-bar glass-panel" style="position: relative; z-index: 120;">
+          <div class="filter-group" style="max-width: 400px; width: 100%; position: relative;">
+            <label for="player-search-input">Search Player</label>
+            <div class="search-wrapper" style="width: 100%; display:block;">
+              <i class="fas fa-search" style="left:15px;"></i>
+              <input type="text" id="player-search-input" class="search-input" style="padding-left:42px; font-size:0.95rem; height:42px;" placeholder="Search e.g. V Kohli, MS Dhoni...">
+              <div id="player-suggestions" class="autocomplete-suggestions hidden"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile Grid -->
+        <div class="player-profile-grid mt-20">
+          
+          <!-- Avatar Panel -->
+          <div class="player-card glass-panel">
+            <div class="player-avatar-wrapper">
+              <div id="pl-avatar-initials" class="player-avatar">VK</div>
+            </div>
+            <h2 id="pl-name" class="player-name">Virat Kohli</h2>
+            <div id="pl-role" class="player-role-badge">Batsman</div>
+            
+            <div class="player-meta-info">
+              <div class="player-meta-row">
+                <span class="text-muted">Total Matches:</span>
+                <strong id="pl-meta-matches" class="text-main">--</strong>
+              </div>
+              <div class="player-meta-row">
+                <span class="text-muted">Most Recent Franchise:</span>
+                <strong id="pl-meta-team" class="text-main">--</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats Dashboard -->
+          <div class="player-stats-dashboard">
+            <!-- Batting Stats Block -->
+            <div class="glass-panel" style="padding:24px; border-radius: var(--border-radius-lg);">
+              <h3 class="player-stats-section-title"><i class="fas fa-bat"></i> Batting Statistics</h3>
+              <div class="stats-flex-grid">
+                <div class="mini-stat-card">
+                  <div id="pl-runs" class="mini-stat-value">--</div>
+                  <div class="mini-stat-label">Runs</div>
+                </div>
+                <div class="mini-stat-card">
+                  <div id="pl-highest" class="mini-stat-value">--</div>
+                  <div class="mini-stat-label">Highest Score</div>
+                </div>
+                <div class="mini-stat-card">
+                  <div id="pl-average" class="mini-stat-value">--</div>
+                  <div class="mini-stat-label">Average</div>
+                </div>
+                <div class="mini-stat-card">
+                  <div id="pl-sr" class="mini-stat-value">--</div>
+                  <div class="mini-stat-label">Strike Rate</div>
+                </div>
+                <div class="mini-stat-card">
+                  <div id="pl-fifties" class="mini-stat-value">--</div>
+                  <div class="mini-stat-label">Fifties (50s)</div>
+                </div>
+                <div class="mini-stat-card">
+                  <div id="pl-hundreds" class="mini-stat-value">--</div>
+                  <div class="mini-stat-label">Hundreds (100s)</div>
+                </div>
+                <div class="mini-stat-card">
+                  <div id="pl-fours" class="mini-stat-value">--</div>
+                  <div class="mini-stat-label">Fours (4s)</div>
+                </div>
+                <div class="mini-stat-card">
+                  <div id="pl-sixes" class="mini-stat-value">--</div>
+                  <div class="mini-stat-label">Sixes (6s)</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bowling Stats Block -->
+            <div class="glass-panel" style="padding:24px; border-radius: var(--border-radius-lg);">
+              <h3 class="player-stats-section-title"><i class="fas fa-bowling-ball"></i> Bowling Statistics</h3>
+              <div class="stats-flex-grid">
+                <div class="mini-stat-card">
+                  <div id="pl-wickets" class="mini-stat-value">--</div>
+                  <div class="mini-stat-label">Wickets</div>
+                </div>
+                <div class="mini-stat-card">
+                  <div id="pl-economy" class="mini-stat-value">--</div>
+                  <div class="mini-stat-label">Economy</div>
+                </div>
+                <div class="mini-stat-card">
+                  <div id="pl-bowl-avg" class="mini-stat-value">--</div>
+                  <div class="mini-stat-label">Average</div>
+                </div>
+                <div class="mini-stat-card">
+                  <div id="pl-best-bowl" class="mini-stat-value">--</div>
+                  <div class="mini-stat-label">Best Bowling</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Trend Line Graphs -->
+        <div class="grid-charts">
+          <div class="chart-card glass-panel">
+            <div class="chart-header">
+              <h3 class="chart-title">Runs Progression by Season</h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-player-runs"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card glass-panel">
+            <div class="chart-header">
+              <h3 class="chart-title">Strike Rate Trend</h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-player-sr"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-charts">
+          <div class="chart-card glass-panel" style="grid-column: span 2;">
+            <div class="chart-header">
+              <h3 class="chart-title">Wickets Taken by Season</h3>
+            </div>
+            <div class="chart-container" style="min-height:220px;">
+              <canvas id="chart-player-wickets"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. SEASON VIEW -->
+      <section id="season-view" class="view-section hidden">
+        <div class="view-header">
+          <h1 class="view-title">Season Archive</h1>
+          <p class="view-subtitle">Select any IPL season to review championships details, caps winners, boundary count and records</p>
+        </div>
+
+        <!-- Season selector -->
+        <div class="filters-bar glass-panel">
+          <div class="filter-group" style="max-width: 300px; flex: 1;">
+            <label for="season-select">Select Season</label>
+            <select id="season-select" class="filter-select">
+              <option value="">Loading seasons...</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Award Cards Row -->
+        <div class="grid-kpi" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="kpi-card glass-panel kpi-warning">
+            <div class="kpi-icon-wrapper"><i class="fas fa-crown"></i></div>
+            <div class="kpi-info">
+              <div id="se-champion" class="kpi-value" style="font-size: 1.15rem;">---</div>
+              <div class="kpi-label">Season Champion</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-primary">
+            <div class="kpi-icon-wrapper"><i class="fas fa-medal"></i></div>
+            <div class="kpi-info">
+              <div id="se-runner-up" class="kpi-value" style="font-size: 1.15rem;">---</div>
+              <div class="kpi-label">Runner-Up</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-success">
+            <div class="kpi-icon-wrapper"><i class="fas fa-hat-cowboy-side" style="color:#f97316;"></i></div>
+            <div class="kpi-info">
+              <div id="se-orange-cap" class="kpi-value" style="font-size: 0.95rem;">---</div>
+              <div class="kpi-label">Orange Cap (Most Runs)</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-kpi" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="kpi-card glass-panel kpi-danger">
+            <div class="kpi-icon-wrapper"><i class="fas fa-hat-cowboy" style="color:#8b5cf6;"></i></div>
+            <div class="kpi-info">
+              <div id="se-purple-cap" class="kpi-value" style="font-size: 0.95rem;">---</div>
+              <div class="kpi-label">Purple Cap (Most Wickets)</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-warning">
+            <div class="kpi-icon-wrapper"><i class="fas fa-dice-six"></i></div>
+            <div class="kpi-info">
+              <div id="se-most-sixes" class="kpi-value" style="font-size: 0.95rem;">---</div>
+              <div class="kpi-label">Most Season Sixes</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-success">
+            <div class="kpi-icon-wrapper"><i class="fas fa-arrow-trend-up"></i></div>
+            <div class="kpi-info">
+              <div id="se-highest-score" class="kpi-value" style="font-size: 0.95rem;">---</div>
+              <div class="kpi-label">Highest Team Total</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary KPIs -->
+        <div class="grid-kpi">
+          <div class="kpi-card glass-panel kpi-primary">
+            <div class="kpi-info">
+              <div id="se-matches" class="kpi-value">---</div>
+              <div class="kpi-label">Total Matches</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-success">
+            <div class="kpi-info">
+              <div id="se-runs" class="kpi-value">---</div>
+              <div class="kpi-label">Total Season Runs</div>
+            </div>
+          </div>
+          <div class="kpi-card glass-panel kpi-danger">
+            <div class="kpi-info">
+              <div id="se-wickets" class="kpi-value">---</div>
+              <div class="kpi-label">Total Season Wickets</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Season specific charts -->
+        <div class="grid-charts mt-20">
+          <div class="chart-card glass-panel">
+            <div class="chart-header">
+              <h3 class="chart-title">Runs Cumulative Progression</h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-season-progression"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card glass-panel">
+            <div class="chart-header">
+              <h3 class="chart-title">Wins by Franchise</h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-season-wins"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-charts">
+          <div class="chart-card glass-panel" style="grid-column: span 2;">
+            <div class="chart-header">
+              <h3 class="chart-title">Matches Venue Spread</h3>
+            </div>
+            <div class="chart-container" style="min-height: 250px;">
+              <canvas id="chart-season-venues"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. PREDICTION VIEW -->
+      <section id="prediction-view" class="view-section hidden">
+        <div class="view-header">
+          <h1 class="view-title">Win Probability Predictor</h1>
+          <p class="view-subtitle">Ingest historical matchups and venue variables to calculate dynamic winning probability</p>
+        </div>
+
+        <!-- Predictor Grid Layout -->
+        <div class="predict-grid">
+          
+          <!-- Inputs Card -->
+          <div class="predict-inputs-card glass-panel">
+            <h2 style="font-size: 1.15rem; font-weight:600; margin-bottom:20px;"><i class="fas fa-sliders"></i> Match Conditions</h2>
+            
+            <div class="predict-form">
+              <div class="form-group">
+                <label for="predict-team1">Team 1 (Focus Team)</label>
+                <select id="predict-team1" class="form-select">
+                  <option value="">Select Team 1</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="predict-team2">Team 2 (Opponent)</label>
+                <select id="predict-team2" class="form-select">
+                  <option value="">Select Team 2</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="predict-venue">Match Venue</label>
+                <select id="predict-venue" class="form-select">
+                  <option value="">Select Venue</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="predict-toss-winner">Toss Winner</label>
+                <select id="predict-toss-winner" class="form-select">
+                  <option value="">Select Toss Winner</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="predict-toss-decision">Toss Decision</label>
+                <select id="predict-toss-decision" class="form-select">
+                  <option value="field">Choose to Field</option>
+                  <option value="bat">Choose to Bat</option>
+                </select>
+              </div>
+
+              <button id="predict-submit" class="btn-primary predict-btn">
+                <i class="fas fa-wand-magic-sparkles"></i> Calculate Probabilities
+              </button>
+            </div>
+          </div>
+
+          <!-- Results Card -->
+          <div class="predict-result-card glass-panel">
+            
+            <!-- Result Placeholder (shown initially) -->
+            <div id="predict-placeholder" class="text-center" style="padding:40px 20px;">
+              <i class="fas fa-chart-simple" style="font-size:3.5rem; color:var(--text-light); margin-bottom: 20px; display:block;"></i>
+              <h3 style="font-size:1.1rem; font-weight:600; color:var(--text-main);">Calculation Pending</h3>
+              <p style="font-size:0.8rem; color:var(--text-muted); max-width:280px; margin-top:6px;">Select match variables and click Calculate to compute probabilities.</p>
+            </div>
+
+            <!-- Result Content (hidden initially) -->
+            <div id="predict-result-content" class="hidden" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+              
+              <!-- Semicircle SVG Gauge -->
+              <div class="gauge-outer">
+                <svg class="gauge-svg" viewBox="0 0 200 120">
+                  <defs>
+                    <!-- Gradient for the gauge filling -->
+                    <linearGradient id="gauge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="var(--danger-color)" />
+                      <stop offset="50%" stop-color="var(--accent-color)" />
+                      <stop offset="100%" stop-color="var(--success-color)" />
+                    </linearGradient>
+                  </defs>
+                  <!-- Background semicircle path -->
+                  <path class="gauge-bg" d="M10,110 A90,90 0 0,1 190,110" />
+                  <!-- Arc representation of calculated value -->
+                  <path id="gauge-fill-arc" class="gauge-fill" d="M10,110 A90,90 0 0,1 190,110" />
+                </svg>
+                <div class="gauge-text-wrapper">
+                  <div id="gauge-pct-text" class="gauge-percentage">50%</div>
+                  <div id="gauge-winner-text" class="gauge-label">Team Name</div>
+                </div>
+              </div>
+
+              <!-- Win Announcer -->
+              <div id="predict-winner-banner" class="prediction-winner-announce">
+                Predicted Winner: <span>Mumbai Indians</span>
+              </div>
+
+              <!-- Probability Split Bar -->
+              <div class="flex-between" style="width:100%; font-size:0.8rem; font-weight:600; margin-bottom: 5px;">
+                <span id="prob-team1-name">Team 1</span>
+                <span id="prob-team2-name">Team 2</span>
+              </div>
+              <div class="flex-between" style="width:100%; font-size:1.1rem; font-weight:700; margin-bottom: 12px; color:var(--primary-color);">
+                <span id="prob-team1-pct">50%</span>
+                <span id="prob-team2-pct">50%</span>
+              </div>
+
+              <!-- Breakdown Factors -->
+              <div class="prediction-summary-container">
+                <h3 style="font-size:0.9rem; font-weight:600; margin-bottom:12px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">Contributing Factors</h3>
+                
+                <div class="factor-bars">
+                  <!-- H2H factor -->
+                  <div class="factor-row">
+                    <div class="factor-labels">
+                      <span class="text-muted">Head-to-Head Wins</span>
+                      <span class="text-main">H2H Ratio</span>
+                    </div>
+                    <div class="factor-progress-bg">
+                      <div id="bar-h2h" class="factor-progress-fill"></div>
+                    </div>
+                  </div>
+                  <!-- Venue Advantage -->
+                  <div class="factor-row">
+                    <div class="factor-labels">
+                      <span class="text-muted">Venue Advantage</span>
+                      <span class="text-main">Stadium Wins</span>
+                    </div>
+                    <div class="factor-progress-bg">
+                      <div id="bar-venue" class="factor-progress-fill"></div>
+                    </div>
+                  </div>
+                  <!-- Form -->
+                  <div class="factor-row">
+                    <div class="factor-labels">
+                      <span class="text-muted">Recent Match Form (Last 5)</span>
+                      <span class="text-main">Recent Momentum</span>
+                    </div>
+                    <div class="factor-progress-bg">
+                      <div id="bar-form" class="factor-progress-fill"></div>
+                    </div>
+                  </div>
+                  <!-- Toss -->
+                  <div class="factor-row">
+                    <div class="factor-labels">
+                      <span class="text-muted">Toss Advantage Impact</span>
+                      <span class="text-main">Decision History</span>
+                    </div>
+                    <div class="factor-progress-bg">
+                      <div id="bar-toss" class="factor-progress-fill"></div>
+                    </div>
+                  </div>
+                  <!-- Strength -->
+                  <div class="factor-row">
+                    <div class="factor-labels">
+                      <span class="text-muted">Franchise Win Strength</span>
+                      <span class="text-main">All-time record</span>
+                    </div>
+                    <div class="factor-progress-bg">
+                      <div id="bar-strength" class="factor-progress-fill"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Confidence indicator -->
+                <div class="confidence-indicator">
+                  <span>Model Confidence:</span>
+                  <strong id="predict-confidence-val">--%</strong>
+                  <div id="confidence-dot" class="confidence-dot"></div>
+                </div>
+
+                <!-- Explanation Narrative -->
+                <div id="predict-narrative-text" class="prediction-narrative">
+                  Loading analysis narrative...
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- 8. ABOUT VIEW -->
+      <section id="about-view" class="view-section hidden">
+        <div class="about-card glass-panel">
+          <h1 class="mb-10"><i class="fas fa-trophy" style="color:var(--accent-color);"></i> IPL Analytics & Predictor Dashboard</h1>
+          <p class="mb-20">This is a premium, client-side, single-page application built as a data science portfolio project. The dashboard aggregates over 17 years of historical Indian Premier League (IPL) matches and ball-by-ball delivery datasets, providing comprehensive statistics, rosters landmarks, yearly records, and win-probability calculation engines.</p>
+          
+          <h3 class="mb-10" style="border-bottom: 2px solid var(--border-color); padding-bottom:6px;">Key Features</h3>
+          <div class="about-features">
+            <div class="feature-item">
+              <i class="fas fa-chart-column"></i>
+              <h4>Visual Dashboards</h4>
+              <p>Chart.js visualizations plotting team wins, seasonal matches, runs progression, toss choices, and venues distribution.</p>
+            </div>
+            <div class="feature-item">
+              <i class="fas fa-sliders"></i>
+              <h4>Deep Filters</h4>
+              <p>Slice and dice match statistics across seasons, venues, and franchises instantly with cached browser indexes.</p>
+            </div>
+            <div class="feature-item">
+              <i class="fas fa-user-ninja"></i>
+              <h4>Rosters & Players Profile</h4>
+              <p>Autocomplete player searches evaluating career aggregates, boundary count, strike rates, economy, and best bowling.</p>
+            </div>
+            <div class="feature-item">
+              <i class="fas fa-wand-magic-sparkles"></i>
+              <h4>Multi-Factor Predictor</h4>
+              <p>Predict match outcomes using a statistical formula weighting Head-to-Head (35%), Venue (20%), Form (20%), Toss (15%), and Overall strength (10%).</p>
+            </div>
+          </div>
+
+          <h3 class="mb-10 mt-20" style="border-bottom: 2px solid var(--border-color); padding-bottom:6px;">Technical Stack</h3>
+          <ul style="padding-left:20px; font-size:0.85rem; line-height: 1.8; color:var(--text-muted);">
+            <li><strong>Core:</strong> HTML5, Vanilla CSS3 (Custom Variables, Flexbox, Grids, Transitions, Keyframes).</li>
+            <li><strong>Layout System:</strong> Custom Glassmorphism cards with CSS backdrop filter blurs and premium dark styling.</li>
+            <li><strong>Data Parsing:</strong> In-browser CSV tokenizer using PapaParse for lightning-fast deliveries index compile.</li>
+            <li><strong>Charts Engine:</strong> Chart.js rendering bar, pie, line, doughnut and horizontal axes.</li>
+            <li><strong>Vector graphics:</strong> Font Awesome vectors and SVG arcs for the winning probability gauge.</li>
+          </ul>
+
+          <h3 class="mb-10 mt-20" style="border-bottom: 2px solid var(--border-color); padding-bottom:6px;">Keyboard Shortcuts & Utilities</h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); line-height: 1.6;">
+            - <strong>Alt + T:</strong> Toggle Light / Dark mode themes instantly.<br>
+            - <strong>Alt + F:</strong> Toggle Fullscreen window mode.<br>
+            - <strong>PDF Export:</strong> Clicking "Export PDF" in the header will optimize the view and open the system print dialog. Save as PDF.
+          </p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ==========================================================================
+       SCROLL TO TOP BUTTON
+       ========================================================================== -->
+  <button id="scroll-top" class="scroll-top-btn" title="Scroll to Top">
+    <i class="fas fa-arrow-up"></i>
+  </button>
+
+  <!-- ==========================================================================
+       LOADING SCREEN OVERLAY & FILE UPLOAD DIALOGS
+       ========================================================================== -->
+  <div id="loading-overlay" class="overlay-container">
+    <div class="overlay-bg"></div>
+    <div class="overlay-card glass-panel">
+      <h2 class="mb-10"><i class="fas fa-trophy" style="color:var(--accent-color);"></i> IPL Analytics</h2>
+      <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom: 20px;">Welcome to the IPL Analytics & Prediction Dashboard</p>
+      
+      <!-- Load status indicator -->
+      <div id="load-spinner" class="spinner-container">
+        <div class="spinner"></div>
+        <div id="load-status-text" class="spinner-text">Ingesting matches.csv...</div>
+        <div class="spinner-subtext">This happens only once on initial boot. Please wait.</div>
+      </div>
+
+      <!-- File upload Fallback Form (Hidden by default, shown if CORS/fetch fails) -->
+      <div id="upload-form" class="hidden">
+        <div id="dropzone" class="upload-zone">
+          <i class="fas fa-cloud-arrow-up upload-icon"></i>
+          <p class="upload-text">Drag & drop CSV files here</p>
+          <p class="upload-subtext">or click to browse your system</p>
+          <input type="file" id="file-input" class="hidden" accept=".csv" multiple>
+        </div>
+
+        <div id="file-status-list" class="file-status-list">
+          <!-- Populated by JS -->
+          <div class="file-status-item">
+            <span class="file-status-name">matches.csv</span>
+            <span class="file-status-badge" style="background:rgba(239, 68, 68, 0.15); color:var(--danger-color);">Pending</span>
+          </div>
+          <div class="file-status-item">
+            <span class="file-status-name">deliveries.csv</span>
+            <span class="file-status-badge" style="background:rgba(239, 68, 68, 0.15); color:var(--danger-color);">Pending</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Custom Scripts Order -->
+  <script src="js/utils.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/analysis.js"></script>
+  <script src="js/team.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/season.js"></script>
+  <script src="js/prediction.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
